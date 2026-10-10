@@ -1,0 +1,38 @@
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: 3000
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-knowledge_repo}
+      DB_USER: ${DB_USER:-kb}
+      DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+      DB_SSL: "false"
+      MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-50}
+      UPLOAD_DIR: /app/data/uploads
+    volumes:
+      - uploads:/app/data/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-knowledge_repo}
+      POSTGRES_USER: ${DB_USER:-kb}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-kb} -d ${DB_NAME:-knowledge_repo}"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+volumes:
+  postgres_data:
+  uploads:
