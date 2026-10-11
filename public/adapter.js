@@ -1,7 +1,14 @@
 /* Compatibility bridge: keeps the supplied frontend working without a login provider. */
 (function () {
   const json = async (url, options = {}) => {
-    const response = await fetch(url, { ...options, headers: { 'Content-Type': 'application/json', ...(options.headers || {}) } });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    let response;
+    try {
+      response = await fetch(url, { ...options, signal: controller.signal, headers: { 'Content-Type': 'application/json', ...(options.headers || {}) } });
+    } finally {
+      clearTimeout(timeout);
+    }
     if (!response.ok) { let message = `Request failed (${response.status})`; try { const body = await response.json(); message = body.error || message; } catch {} throw new Error(message); }
     if (response.status === 204) return null;
     return response.json();
