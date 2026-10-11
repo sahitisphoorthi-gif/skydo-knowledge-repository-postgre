@@ -512,7 +512,7 @@ const pxPage=()=>`<h1>Prohibited services</h1><p class="lead">Enter one or more 
 function pxInit(){const i=document.getElementById('pxq');if(i){i.value=pxq;pxShow()}}
 const blob=k=>B[k]||(B[k]=URL.createObjectURL(new Blob([Uint8Array.from(atob(F[k]),c=>c.charCodeAt(0))],{type:'text/html;charset=utf-8'})));
 const fsrc=k=>blob(k)+(k=='g'?'#embed=1':'');
-const fdoc=k=>{let h=new TextDecoder('utf-8').decode(Uint8Array.from(atob(F[k]),c=>c.charCodeAt(0)));if(k=='g')h=h.replace('/[?&#]embed=1/.test(q)','true');return h};
+const fdoc=k=>{let h=new TextDecoder('utf-8').decode(Uint8Array.from(atob(F[k]),c=>c.charCodeAt(0)));if(k=='g')h=h.replace('/[?&#]embed=1/.test(q)','true');if(k=='w')h=h.replace(/href="#([^"]+)"/g,(_,id)=>`href="#${id}" onclick="event.preventDefault();document.getElementById('${id}').scrollIntoView({behavior:'smooth'})"`);return h};
 const gOpen=()=>{const w=window.open('','_blank');if(!w){window.open('https://claude.ai/artifact/XsffCmBioTfWwe2PNBJEbD','_blank');return}const h=new TextDecoder('utf-8').decode(Uint8Array.from(atob(F.g),c=>c.charCodeAt(0)));w.document.open();w.document.write(h);w.document.close()};
 const fesc=h=>h.replace(/&/g,'&amp;').replace(/"/g,'&quot;');
 window.addEventListener('message',e=>{const f=document.getElementById('fr');if(f&&e.source===f.contentWindow&&e.data&&e.data.type=='skydo-guide-height'&&f.dataset.k!='w'){f.style.height=e.data.height+'px';f.style.minHeight='0'}});
