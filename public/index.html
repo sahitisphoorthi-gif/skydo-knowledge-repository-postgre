@@ -803,7 +803,7 @@ async function fmLoad(){try{if(window.claude&&claude.use){fm.db=fm.db||await cla
 if(fm.db){try{const a=await fm.db.collection('kb_files').get();fm.rows=a.docs.map(d=>({id:d.id,...d.data()}));const b=await fm.db.collection('kb_overrides').get();fm.ov={};b.docs.forEach(d=>fm.ov[d.id]=d.data())}catch(e){fm.db=null}}
 try{const ids=[...new Set([...fm.rows.map(r=>r.by),...Object.values(fm.ov).map(o=>o.by)].filter(Boolean))];if(fm.u&&ids.length){const ps=await fm.u.profiles(ids);ids.forEach(i=>fm.names[i]=(ps[i]&&ps[i].name)||'')}}catch(e){}}
 const fmWho=i=>i&&fm.names[i]?E(fm.names[i]):'a teammate';
-async function fmApplyOv(){for(const k in PDFS){const o=fm.ov[k];if(o&&o.assetId){try{const r=await fetch('/_blob/'+o.assetId),u=new Uint8Array(await r.arrayBuffer());let b='';for(let i=0;i<u.length;i+=32768)b+=String.fromCharCode.apply(null,u.subarray(i,i+32768));PDFS[k]=btoa(b);delete pdfUrls[k]}catch(e){}}else if(PDFS[k]!==PDF0[k]){PDFS[k]=PDF0[k];delete pdfUrls[k]}}}
+async function fmApplyOv(){for(const k in PDFS){const o=fm.ov[k];if(o&&o.assetId){const r=await fetch('/_blob/'+o.assetId);if(!r.ok)throw new Error(`Could not load replacement for ${FM_BUILT[k]||k} (HTTP ${r.status})`);const u=new Uint8Array(await r.arrayBuffer());if(u.length<5||u[0]!==37||u[1]!==80||u[2]!==68||u[3]!==70||u[4]!==45)throw new Error(`Replacement for ${FM_BUILT[k]||k} is not a valid PDF`);let b='';for(let i=0;i<u.length;i+=32768)b+=String.fromCharCode.apply(null,u.subarray(i,i+32768));PDFS[k]=btoa(b);delete pdfUrls[k]}else if(PDFS[k]!==PDF0[k]){PDFS[k]=PDF0[k];delete pdfUrls[k]}}}
 function fmLib(){return window.XLSX?Promise.resolve():new Promise((ok,no)=>{const e=document.createElement('script');e.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';e.onload=ok;e.onerror=no;document.head.appendChild(e)})}
 function fmCsv(t){const r=[];let w=[],c='',q=0;for(let i=0;i<t.length;i++){const h=t[i];if(q){if(h=='"'){if(t[i+1]=='"'){c+='"';i++}else q=0}else c+=h}else if(h=='"')q=1;else if(h==','){w.push(c);c=''}else if(h=='\n'){w.push(c);r.push(w);w=[];c=''}else if(h!='\r')c+=h}w.push(c);r.push(w);return r}
 function fmPage(){return '<div class="fmbox" id="fmroot"></div>'}
@@ -961,13 +961,17 @@ function kbConfirm(msg,ok){return new Promise(res=>{const d=document.createEleme
 const kbSig=()=>JSON.stringify([fm.rows.map(r=>[r.id,r.ts,r.title,r.mod,r.card,r.assetId,r.url]),Object.keys(fm.ov||{}).map(k=>[k,fm.ov[k].ts]),QC.cfg,QC.cu.length,(KBA.rows[0]||{}).ts,KBA.rows.length]);
 let kbLast='',kbBusy=0;
 async function kbRefresh(){if(kbBusy||document.hidden||qz.on)return;kbBusy=1;try{
-await fmLoad();await fmApplyOv();fmSync();if(cur.v=='quiz'||cur.v=='files')await qcLoad(true);await kbFeedLoad();
+const priorOverrides=Object.fromEntries(Object.entries(fm.ov||{}).map(([k,o])=>[k,o.ts]));
+await fmLoad();
+const changedOverrides=new Set([...Object.keys(priorOverrides),...Object.keys(fm.ov||{})].filter(k=>priorOverrides[k]!==fm.ov[k]?.ts));
+await fmApplyOv();fmSync();if(cur.v=='quiz'||cur.v=='files')await qcLoad(true);await kbFeedLoad();
 const g=kbSig(),changed=g!==kbLast;kbLast=g;
 const a=document.activeElement,typing=a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName),modal=document.querySelector('.qzo2');
-if(changed&&!typing&&!modal&&!qs&&!cur.r&&!['files','quiz','queries'].includes(cur.v))render();
+const openResource=cur.r&&R.find(r=>r.id==cur.r),refreshOpenPdf=openResource&&changedOverrides.has(openResource.pk);
+if(changed&&!typing&&!modal&&!qs&&(refreshOpenPdf||(!cur.r&&!['files','quiz','queries'].includes(cur.v))))render();
 else if(!changed&&cur.v=='overview'&&!cur.r&&!qs){const e=document.getElementById('kbact');if(e)e.innerHTML=kbInner()}
 if(cur.v=='queries'&&!typing&&!modal&&!document.querySelector('[id^=qt_]:not(:empty)')){const t=document.getElementById('qyt'),b=document.getElementById('qyb');if(!(t&&t.value)&&!(b&&b.value))await qyDraw()}
-}catch(e){}kbBusy=0}
+}catch(e){console.error('[kb] Shared document refresh failed:',e)}kbBusy=0}
 setInterval(kbRefresh,30000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)kbRefresh()});
 const qT=id=>((typeof qy!=='undefined'&&qy.rows||[]).find(x=>x.id==id)||{}).title||'a query';
 const KBA={rows:[]},KB_D=2*864e5;
