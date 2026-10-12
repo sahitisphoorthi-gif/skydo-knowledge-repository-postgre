@@ -2,6 +2,7 @@
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Compliance Knowledge Repository</title>
+<link rel="stylesheet" href="/chatbot.css">
 <style>
 :root{--bg:#0a111d;--sb:#0c1524;--cd:#0f1b2d;--bd:#1b2a41;--tx:#e8eef8;--mu:#8393ab;--cy:#6be8fa;--am:#f2b266;--gr:#4fe0b4;--rd:#ff8a8a}
 *{box-sizing:border-box}html,body{height:100%}
@@ -590,7 +591,7 @@ function render(){nav();let h='';
 if(cur.r){const r=R.find(x=>x.id==cur.r);bc.innerHTML=`<a onclick="go('${r.v}')">Workspace</a> › <a onclick="go('${r.v}')">${vl(r.v)}</a> › <b>${r.t}</b>`;
 h=`<button class="bt" onclick="go('${r.v}')">← Back</button><h1>${r.t}</h1><p class="lead">${r.d}</p>${r.frame?frameHtml():''}${r.pk?pdfViewer(r):''}${r.pa?pdfaViewer(r):''}${r.id=='t0'?'<button class="bt" onclick="op(\'tsop\')">View full Customer Tickets SOP (PDF) ›</button>':''}`+r.s.map((s,i)=>`<details ${r.s.length<3?'open':''}><summary>${s[0]}</summary><div>${s[1]}</div></details>`).join('')}
 else if(qs){bc.innerHTML='Workspace › <b>Search</b>';const l=qs.toLowerCase();const f=R.filter(r=>(r.t+r.d+(r.s||[]).map(s=>s[0]+s[1]).join('')).toLowerCase().includes(l));h=`<h1>Search</h1>`+sb()+(f.length?grid(f):'<p class="lead">No matches.</p>')}
-else if(cur.v=='overview'){bc.innerHTML='Workspace › <b>Overview</b>';h=`<h1>Overview</h1><p class="lead">Every SOP, guideline and checklist in one place.</p>${sb()}<h3>Ticket playbooks</h3>${grid(R.filter(r=>r.v=='tickets'&&r.id!='t0'))}<div class="row"><div class="pn"><small>FAST LANE</small><h2>Common analyst lookups</h2><div class="lk">${LF.map(x=>`<button onclick="op('${x[1]}')">${x[0]}</button>`).join('')}</div></div><div class="pn es"><small>NEED A SECOND VIEW?</small><h2>Escalate with context.</h2><p style="color:#aab7cc">Before raising a ticket, capture the customer type, request, documents reviewed, checks completed and exact blocker.</p><button class="ol" onclick="go('tickets')">Open ticket workflows ↗</button></div></div>`}
+else if(cur.v=='overview'){bc.innerHTML='Workspace › <b>Overview</b>';h='<h1>Overview</h1>'}
 else if(cur.v=='prohibited'){bc.innerHTML='Workspace › <b>Prohibited services</b>';h=pxPage()}
 else if(cur.v=='queries'){bc.innerHTML='Workspace › <b>Queries</b>';h=qyPage()}
 else if(cur.v=='files'){bc.innerHTML='Workspace › <b>Admin workspace</b>';h=fmPage()}
@@ -1118,4 +1119,4 @@ render();
 fmLoad().then(()=>{fmSync();if(!qz.on&&cur.v!='files'&&cur.v!='quiz')render()});
 
 render();
-</script></body></html>
+</script><script src="/chatbot.js"></script></body></html>
