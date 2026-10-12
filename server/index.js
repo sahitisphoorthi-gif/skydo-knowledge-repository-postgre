@@ -31,8 +31,10 @@ async function connectDb() {
       )`);
       await pool.query(`CREATE TABLE IF NOT EXISTS uploaded_blobs (
         id VARCHAR(64) PRIMARY KEY, original_name VARCHAR(255) NOT NULL, stored_name VARCHAR(255) NOT NULL,
-        mime_type VARCHAR(255), size_bytes BIGINT, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        mime_type VARCHAR(255), size_bytes BIGINT, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        file_data BYTEA
       )`);
+      await pool.query('ALTER TABLE uploaded_blobs ADD COLUMN IF NOT EXISTS file_data BYTEA');
       console.log('[db] PostgreSQL connected and schema is ready');
       return;
     } catch (e) {
@@ -97,20 +99,26 @@ app.post('/api/blobs', upload.single('file'), async (req, res, next) => {
     const id = crypto.randomUUID().replace(/-/g, '');
     const ext = path.extname(req.file.originalname).slice(0, 20);
     const storedName = id + ext;
-    const finalPath = path.join(UPLOAD_DIR, storedName);
-    fs.renameSync(req.file.path, finalPath);
-    await pool.query('INSERT INTO uploaded_blobs (id, original_name, stored_name, mime_type, size_bytes) VALUES ($1, $2, $3, $4, $5)', [id, req.file.originalname, storedName, req.file.mimetype, req.file.size]);
+    const fileData = await fs.promises.readFile(req.file.path);
+    await pool.query('INSERT INTO uploaded_blobs (id, original_name, stored_name, mime_type, size_bytes, file_data) VALUES ($1, $2, $3, $4, $5, $6)', [id, req.file.originalname, storedName, req.file.mimetype, req.file.size, fileData]);
     res.json({ id });
   } catch (e) { next(e); }
+  finally {
+    if (req.file?.path) {
+      try { await fs.promises.unlink(req.file.path); }
+      catch (e) { if (e.code !== 'ENOENT') console.error('[upload] Could not remove temporary upload:', e); }
+    }
+  }
 });
 app.get('/_blob/:id', async (req, res, next) => {
   try {
     const { rows } = await pool.query('SELECT * FROM uploaded_blobs WHERE id = $1', [cleanId(req.params.id)]);
     if (!rows.length) return res.status(404).send('File not found');
     const b = rows[0], fp = path.join(UPLOAD_DIR, b.stored_name);
-    if (!fs.existsSync(fp)) return res.status(404).send('File is missing from storage');
     res.setHeader('Content-Type', b.mime_type || 'application/octet-stream');
     res.setHeader('Content-Disposition', `inline; filename*=UTF-8''${encodeURIComponent(b.original_name)}`);
+    if (b.file_data) return res.send(b.file_data);
+    if (!fs.existsSync(fp)) return res.status(404).send('File is missing from storage');
     res.sendFile(fp);
   } catch (e) { next(e); }
 });

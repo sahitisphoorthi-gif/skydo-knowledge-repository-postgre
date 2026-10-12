@@ -60,9 +60,9 @@ This avoids Render's free PostgreSQL 30-day expiry by using a separate PostgreSQ
 7. Click **Create Web Service** and wait for the deployment to finish.
 8. In Render, open the generated URL. Then open `<your-render-url>/api/health`. A successful result should show `ok: true` and `database: connected`.
 
-## Important free-tier file-storage limitation
+## Uploaded-file storage
 
-The database records persist in Neon, but this version stores uploaded file bytes on the app's local filesystem. Render Free has an ephemeral filesystem, so uploaded PDFs/spreadsheets may disappear when the app restarts or redeploys. `UPLOAD_DIR=/tmp/uploads` makes the service writable but does **not** make uploads permanent. For reliable file uploads, the next required change is to move blob storage to a persistent object-storage service (for example Supabase Storage or another S3-compatible service) and configure backups. Do not use this deployment for important customer/compliance files until that is done.
+Uploaded file bytes are stored in PostgreSQL, so they survive Render restarts and redeploys independently of the app's temporary `UPLOAD_DIR` staging directory. The database provider's storage limits and backup/retention policies still apply; monitor database usage and keep backups. Files uploaded by older versions may still depend on the app filesystem. If an older upload has already disappeared from Render's ephemeral filesystem, its bytes cannot be recovered by this update and the file must be uploaded again.
 
 ## API overview
 
