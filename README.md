@@ -23,7 +23,7 @@ Requirements: Docker Desktop (running) and Git.
 
 6. Open <http://localhost:3000>.
 7. Check database health at <http://localhost:3000/api/health>. It should return `{"ok":true,"database":"connected"}`.
-8. While taking a quiz, use **Admin: correct answer** on the current question to update its answer key (and question text or options, if needed). The correction is saved for future attempts and applies to the question currently in progress.
+8. While taking a quiz, use **Admin: correct answer** on the current question to update its answer key (and question text or options, if needed). If the correct answer is not listed, add it in **Answer not listed?** and provide its required explanation. The correction is saved for future attempts and applies to the question currently in progress.
 9. View logs with `docker compose logs -f app`.
 10. Stop with `docker compose down`. Data volumes remain. `docker compose down -v` deletes the database and uploaded files; use only if you intend to erase them.
 
