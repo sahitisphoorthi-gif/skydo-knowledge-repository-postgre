@@ -23,8 +23,9 @@ Requirements: Docker Desktop (running) and Git.
 
 6. Open <http://localhost:3000>.
 7. Check database health at <http://localhost:3000/api/health>. It should return `{"ok":true,"database":"connected"}`.
-8. View logs with `docker compose logs -f app`.
-9. Stop with `docker compose down`. Data volumes remain. `docker compose down -v` deletes the database and uploaded files; use only if you intend to erase them.
+8. To correct a quiz question or its answer, open **Admin workspace → Weekly quiz**, search the question bank, and choose **Edit**. Saving also updates which answer is scored as correct.
+9. View logs with `docker compose logs -f app`.
+10. Stop with `docker compose down`. Data volumes remain. `docker compose down -v` deletes the database and uploaded files; use only if you intend to erase them.
 
 ## 2. Free deployment (Render + Neon PostgreSQL)
 
